@@ -1,5 +1,6 @@
 package com.itba.sentiment.twitter.messages;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
@@ -15,24 +16,26 @@ import twitter4j.QueryResult;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
+import twitter4j.TwitterObjectFactory;
 import twitter4j.UserMentionEntity;
 
-public class TwitterMessages {
+public class TwitterMessageService {
 
 	private static DBCollection items;
 
-	public static void getTweetByQuery(boolean loadRecords, String keyword) throws InterruptedException {
+	public static List<String> getTweetByQuery(boolean loadRecords, String keyword) throws InterruptedException {
 
 		Twitter twitter = TwitterAccess.getInstance().getTwitterObj();
+		ArrayList<String> jsonTweets = new ArrayList<String>();
 		if (twitter != null) {
 
 			try {
 				Query query = new Query(keyword);
-				query.setCount(100);
+				query.setCount(3);
 				QueryResult result;
 				result = twitter.search(query);
 				System.out.println("Getting Tweets...");
-				List<Status> tweets = result.getTweets();
+				List<Status> tweets = result.getTweets();				
 
 				for (Status tweet : tweets) {
 					Document basicObj = new Document();
@@ -46,18 +49,16 @@ public class TwitterMessages {
 					basicObj.put("tweet_mentioned_count", mentioned.length);
 					basicObj.put("tweet_ID", tweet.getId());
 					basicObj.put("tweet_text", tweet.getText());
-					
+
 					try {
 						JsonHelper.printJson(basicObj);
+						String json = TwitterObjectFactory.getRawJSON(tweet);						
+						jsonTweets.add(json);
+						
+						System.out.println(json);						
 					} catch (Exception e) {
 						System.out.println("MongoDB Connection Error : " + e.getMessage());
-
 					}
-				}
-
-				// Printing fetched records from DB.
-				if (loadRecords) {
-					getTweetsRecords();
 				}
 
 			} catch (TwitterException te) {
@@ -75,6 +76,7 @@ public class TwitterMessages {
 		} else {
 			System.out.println("MongoDB is not Connected! Please check mongoDB intance running..");
 		}
+		return jsonTweets;
 	}
 
 	public static void getTweetsRecords() throws InterruptedException {

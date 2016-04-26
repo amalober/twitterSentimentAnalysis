@@ -23,10 +23,10 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.alchemyapi.api.AlchemyAPI;
-import com.ibm.watson.developer_cloud.retrieve_and_rank.v1.util.Messages;
 import com.itba.sentiment.alchemy.MessageParser;
-import com.itba.sentiment.analysis.Message;
-import com.itba.sentiment.analysis.MessageService;
+import com.itba.sentiment.persist.JsonPersistenceService;
+import com.itba.sentiment.twitter.messages.TwitterMessage;
+import com.itba.sentiment.utils.JsonHelper;
 import com.itba.sentiment.utils.MessageCleaner;
 import com.itba.sentiment.utils.WordCount;
 
@@ -35,12 +35,12 @@ import com.itba.sentiment.utils.WordCount;
 public class MessagesController {
 
 	@Autowired
-	private MessageService ms;
+	private JsonPersistenceService jps;
 
 	@RequestMapping(path = "/", produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String getMessages() {
-		return ms.retrieveAllMessages().toString();
+		return jps.getProjectedCollection("tweets").toString();
 	}
 	//
 
@@ -54,46 +54,41 @@ public class MessagesController {
 	@RequestMapping(path = "/process", produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String analizeMessages() {
-		try {
+		
+			ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		
 			AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
-			MessageService ms = new MessageService();
-			ArrayList<Message> messages =(ArrayList<Message>)ms.retrieveNotAnalyzedMessages();
-
-			if (messages != null) {
-				for (Message message : messages) {
-					Document doc = alchemyObj.TextGetTextSentiment(message.getMessage());
-					//System.out.println(getStringFromDocument(doc));
-					MessageParser.parseSentimentResultForMsg(message, doc);		
-					ms.persistMessageResult(message);
+			ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+			for (org.bson.Document tweet : tweets) {
+				JsonHelper.printJson(tweet);
+				projectedTweets.add(new TwitterMessage(tweet));
+			}
+			if (projectedTweets != null) {
+				for (TwitterMessage message : projectedTweets) {
+					Document doc;
+					try {
+						doc = alchemyObj.TextGetTextSentiment(message.getText());
+						MessageParser.parseSentimentResultForMsg(message, doc);						
+					} catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					//System.out.println(getStringFromDocument(doc));				
 				}
 			}
-			messages =(ArrayList<Message>)ms.retrieveAllMessages();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (XPathExpressionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SAXException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ms.retrieveAllMessages().toString();
+			return 	projectedTweets.toString();		
+			
 	}
 
 	private String wordFrequencyJson() {
-
-		MessageService ms = new MessageService();
-		List<Message> messages = ms.retrieveAllMessages();
+		
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
 		String appendedMsgs = "";
 		String cleanMessages = "";
 		String json = "[";
 		if (messages != null) {
-			for (Message message : messages) {
-				appendedMsgs += message.getMessage().toLowerCase() + " ";
+			for (org.bson.Document message : messages) {
+				appendedMsgs += message.getString("text").toLowerCase() + " ";
 			}
 			// System.out.println(appendedMsgs);
 			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
@@ -101,13 +96,13 @@ public class MessagesController {
 
 			m.values().removeAll(Collections.singleton(1));
 			m.values().removeAll(Collections.singleton(2));
-			
+
 			m.keySet().removeAll(Collections.singleton("/"));
-			m.keySet().removeAll(Collections.singleton("vuelos"));
+			
 			// [{\"text\":\"study\",\"size\":40},
 
 			for (Map.Entry<String, Integer> entry : m.entrySet()) {
-				json += "{ text: \"" + entry.getKey() + "\", \"size\": " + entry.getValue()*3 + "},";
+				json += "{ text: \"" + entry.getKey() + "\", \"size\": " + entry.getValue() * 3 + "},";
 			}
 			json = json.substring(0, json.length() - 1);
 			json += ']';

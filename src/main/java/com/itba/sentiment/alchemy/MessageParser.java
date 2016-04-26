@@ -1,19 +1,16 @@
 package com.itba.sentiment.alchemy;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import org.w3c.dom.Document;
 
-import com.itba.sentiment.analysis.Message;
+import com.itba.sentiment.analysis.DocSentiment;
+import com.itba.sentiment.twitter.messages.TwitterMessage;
 
 public class MessageParser {
 
-	private static void parseResult(Message msg, Document doc) {
+	private static void parseResultIntoMessage(TwitterMessage msg, Document doc) {
 
 		try {
 			// create JAXBContext which will be used to create a Binder
@@ -28,13 +25,13 @@ public class MessageParser {
 			System.out.println("Score: " + ds.getScore());
 			System.out.println("Language: " + rs.getLanguage());
 			System.out.println("----------------------");
-			
-			msg.setLanguage(rs.getLanguage());
-			msg.setScore((double) ds.getScore());
-			msg.setAnalysisResult(ds.getType());
-			msg.setMixed(ds.getMixed());
+			msg.setSentiment(new DocSentiment());
+			msg.getSentiment().setLanguage(rs.getLanguage());
+			msg.getSentiment().setScore((double) ds.getScore());
+			msg.getSentiment().setType(ds.getType());
+			msg.getSentiment().setMixed(ds.getMixed());
 	
-			msg.setDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
+			//msg.setDate(Date.from(LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant()));
 			
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -42,16 +39,10 @@ public class MessageParser {
 
 	}
 
-	public static Message parseSentimentResult(Document doc) {
+	
+	public static TwitterMessage parseSentimentResultForMsg(TwitterMessage msg, Document doc) {
 
-		Message msg = new Message();
-		parseResult(msg, doc);
-		return msg;
-	}
-
-	public static Message parseSentimentResultForMsg(Message msg, Document doc) {
-
-		parseResult(msg, doc);
+		parseResultIntoMessage(msg, doc);
 		return msg;
 	}
 

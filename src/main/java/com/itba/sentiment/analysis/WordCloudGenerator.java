@@ -13,6 +13,9 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 
+import com.itba.sentiment.persist.JsonPersistenceService;
+import com.itba.sentiment.twitter.messages.TwitterMessage;
+import com.itba.sentiment.utils.JsonHelper;
 import com.itba.sentiment.utils.MessageCleaner;
 import com.kennycason.kumo.CollisionMode;
 import com.kennycason.kumo.WordCloud;
@@ -45,15 +48,20 @@ public class WordCloudGenerator {
 	}
 
 	private static List<WordFrequency> buildWordFrequencies() throws IOException {
-		MessageService ms = new MessageService();
-		List<Message> messages = ms.retrieveAllMessages();
+		JsonPersistenceService jps = new JsonPersistenceService("mongodb://localhost:27017", "TwitterDB");
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("twittersentiment");
+		for (org.bson.Document tweet : tweets) {
+			JsonHelper.printJson(tweet);
+			projectedTweets.add(new TwitterMessage(tweet));
+		}
 		String appendedMsgs = "";
 		String wordsString;
 	//	String cleanMessages = "";
 		ArrayList<String> words=null;
-		if (messages != null) {
-			for (Message message : messages) {
-				appendedMsgs += message.getMessage().toLowerCase() + " ";
+		if (projectedTweets != null) {
+			for (TwitterMessage message : projectedTweets) {
+				appendedMsgs += message.getText().toLowerCase() + " ";
 			}
 			System.out.println(appendedMsgs);
 			wordsString= MessageCleaner.removeStopwords(appendedMsgs);
@@ -64,6 +72,7 @@ public class WordCloudGenerator {
 		for (String word : words) {
 			wordFrequencies.add(new WordFrequency(word, RANDOM.nextInt(100) + 1));
 		}
+		jps.closeDBConnection();
 		return wordFrequencies;
 	}
 

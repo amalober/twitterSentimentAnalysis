@@ -3,6 +3,7 @@ package com.itba.sentiment.twitter.authentication;
 import twitter4j.Twitter;
 import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
+import twitter4j.conf.ConfigurationBuilder;
 
 public class TwitterAccess {
 	private Twitter twitterObj = null;
@@ -10,7 +11,9 @@ public class TwitterAccess {
 
 	 private TwitterAccess(){
 		 if (twitterObj == null) {
-				TwitterFactory factory = new TwitterFactory();
+			 	ConfigurationBuilder cb = new ConfigurationBuilder();
+			    cb.setJSONStoreEnabled(true);
+				TwitterFactory factory = new TwitterFactory(cb.build());
 				AccessToken accessToken = loadAccessToken();
 				twitterObj = factory.getInstance();
 				twitterObj.setOAuthConsumer("eDYfkKy1HtVDZpo2SP0tLqAce",
