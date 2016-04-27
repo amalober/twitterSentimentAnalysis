@@ -20,10 +20,10 @@ public class TwitterMessage {
 	
 
 	public TwitterMessage(org.bson.Document tweet) {
-		this.username = tweet.getString("user.screen_name");
+		this.username = ((org.bson.Document)(tweet.get("user"))).getString("screen_name");
 		this.tweetid = tweet.getString("id_str");
 		this.URL = baseURL+this.tweetid;
-		this.text = tweet.getString("text");
+		this.text = tweet.getString("text").replaceAll("\"", "").replaceAll("'", "");
 		this.datestr = tweet.getString("created_at");
 		this.id= (ObjectId)tweet.get("_id");
 	}
@@ -106,9 +106,9 @@ public class TwitterMessage {
 		builder.append(text);
 		builder.append("\", \"user\":\"");
 		builder.append(username);
-		builder.append("\", \"sentiment\":\"");
-		builder.append((sentiment ==null)?"":sentiment.toString()); 	
-		builder.append("\"}");
+		builder.append("\", \"sentiment\":");
+		builder.append((sentiment ==null)?"\"\"":sentiment.toString()); 	
+		builder.append("}");
 		return builder.toString();
 
 	}
