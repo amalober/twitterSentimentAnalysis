@@ -96,13 +96,13 @@ body {
 	       var tablita=$("#messages");
 	       tablita.html("<tr><th>ID</th><th>Message</th><th>Result</th></tr>");
 	       for (messageNum in frequency_list) {
-	    	   var result = frequency_list[messageNum].analysisResult.toLowerCase();
+	    	   var result = frequency_list[messageNum].sentiment.type.toLowerCase();
 	    	    var label = result === 'positive' ? 'success' : (result === 'negative' ? 'danger' : 'default');
 	    	    
 	    	    var row = $("<tr>");
 	    	    row.append("<td class=\"row\"> <div class=\"col-md-2\">"+frequency_list[messageNum].id+"</td>");
-	    	    row.append("<td class=\"col-md-7\">"+frequency_list[messageNum].message+"</td>");
-	    	    row.append("<td class=\"col-md-3\"><span class=\"label label-"+ label +"\">" + result + "</span></td></div></tr>");    	    
+	    	    row.append("<td class=\"col-md-7\"> <\a href = \""+frequency_list[messageNum].URL+"\">"frequency_list[messageNum].text+"</td>");
+	    	    row.append("<td class=\"col-md-3\"><span class=\"label label-"+ label +"\">" + frequency_list[messageNum].sentiment.type + "</span></td></div></tr>");    	    
 	    	    tablita.append(row);
 	    	}
 	    });

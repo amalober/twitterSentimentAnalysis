@@ -2,8 +2,10 @@ package com.itba.sentiment.twitter.messages;
 
 import java.time.LocalDateTime;
 
-import com.itba.sentiment.analysis.DocSentiment;
+import org.bson.Document;
 import org.bson.types.ObjectId;
+
+import com.itba.sentiment.analysis.DocSentiment;
 
 public class TwitterMessage {
 
@@ -20,12 +22,27 @@ public class TwitterMessage {
 	
 
 	public TwitterMessage(org.bson.Document tweet) {
+		try{
 		this.username = ((org.bson.Document)(tweet.get("user"))).getString("screen_name");
 		this.tweetid = tweet.getString("id_str");
 		this.URL = baseURL+this.tweetid;
 		this.text = tweet.getString("text").replaceAll("\"", "").replaceAll("'", "");
 		this.datestr = tweet.getString("created_at");
 		this.id= (ObjectId)tweet.get("_id");
+		}catch(ClassCastException cce){
+			this.username =tweet.getString("username");
+			this.tweetid = tweet.getString("tweetid");
+			this.URL = tweet.getString("URL");
+			this.text = tweet.getString("text");
+			this.datestr = tweet.getString("datestr");
+			this.id= (ObjectId)tweet.get("id");
+			this.sentiment = new DocSentiment();
+			Document sentimentjson =  (Document)tweet.get("sentiment");
+			this.sentiment.setType(sentimentjson.getString("type"));
+			this.sentiment.setScore(Double.parseDouble(sentimentjson.getString("mixed")));
+			this.sentiment.setMixed(Integer.parseInt(sentimentjson.getString("mixed")));
+			this.sentiment.setLanguage(sentimentjson.getString("language"));
+		}
 	}
 
 	public LocalDateTime getDate() {

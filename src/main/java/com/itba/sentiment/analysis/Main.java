@@ -38,7 +38,14 @@ public class Main {
 //		testDownloadTweets();
 		//System.out.println(wordFrequencyJson());
 		// testGetMessages();
-		testAnalyzeTweets();
+		//testAnalyzeTweets();
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getAnalyzedCollection("analyzedtweets");
+		for (org.bson.Document tweet : tweets) {
+			JsonHelper.printJson(tweet);
+			projectedTweets.add(new TwitterMessage(tweet));
+		}
+		System.out.println(projectedTweets.toString());
 	}
 
 	private static void testDownloadTweets() {
