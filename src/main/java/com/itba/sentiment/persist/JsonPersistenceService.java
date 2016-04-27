@@ -15,6 +15,9 @@ import com.mongodb.client.MongoDatabase;
 
 import com.itba.sentiment.twitter.messages.TwitterMessage;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class JsonPersistenceService {
 
 	private static MongoDatabase db = null;
@@ -22,7 +25,6 @@ public class JsonPersistenceService {
 	private String database;
 	private MongoClient mc;
 
-	
 	public JsonPersistenceService() {
 		connect("mongodb://localhost:27017", "TwitterDB");
 	}
@@ -58,6 +60,7 @@ public class JsonPersistenceService {
 			Bson projection = new Document("id_str", 1).append("user.screen_name", 1).append("created_at", 1)
 					.append("text", 1);
 			result = collection.find().projection(projection).into(new ArrayList<Document>());
+
 		}
 		return result;
 	}
@@ -83,10 +86,9 @@ public class JsonPersistenceService {
 			mc.close();
 		}
 	}
-	public void updateDocumentWithSentiment(TwitterMessage message, String id){
-		
-		
-		
+
+	public void updateDocumentWithSentiment(TwitterMessage message, String id) {
+
 	}
 
 }

@@ -40,7 +40,13 @@ public class MessagesController {
 	@RequestMapping(path = "/", produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String getMessages() {
-		return jps.getProjectedCollection("tweets").toString();
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		for (org.bson.Document tweet : tweets) {
+			JsonHelper.printJson(tweet);
+			projectedTweets.add(new TwitterMessage(tweet));
+		}
+		return 	projectedTweets.toString();
 	}
 	//
 
@@ -68,7 +74,9 @@ public class MessagesController {
 					Document doc;
 					try {
 						doc = alchemyObj.TextGetTextSentiment(message.getText());
-						MessageParser.parseSentimentResultForMsg(message, doc);						
+						MessageParser.parseSentimentResultForMsg(message, doc);		
+						//persist messages in collection
+						
 					} catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -76,7 +84,7 @@ public class MessagesController {
 					//System.out.println(getStringFromDocument(doc));				
 				}
 			}
-			return 	projectedTweets.toString();		
+			return 	projectedTweets.toString();
 			
 	}
 
@@ -94,10 +102,10 @@ public class MessagesController {
 			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
 			Map<String, Integer> m = WordCount.wordFrequencyCount(cleanMessages);
 
-			m.values().removeAll(Collections.singleton(1));
+		/*	m.values().removeAll(Collections.singleton(1));
 			m.values().removeAll(Collections.singleton(2));
 
-			m.keySet().removeAll(Collections.singleton("/"));
+			m.keySet().removeAll(Collections.singleton("/"));*/
 			
 			// [{\"text\":\"study\",\"size\":40},
 

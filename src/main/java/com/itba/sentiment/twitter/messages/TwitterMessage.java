@@ -107,7 +107,7 @@ public class TwitterMessage {
 		builder.append("\", \"user\":\"");
 		builder.append(username);
 		builder.append("\", \"sentiment\":\"");
-		builder.append(sentiment.toString());
+		builder.append((sentiment ==null)?"":sentiment.toString()); 	
 		builder.append("\"}");
 		return builder.toString();
 
