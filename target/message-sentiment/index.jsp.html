@@ -95,6 +95,7 @@ body {
 	        var frequency_list =eval(data);
 	       var tablita=$("#messages");
 	       tablita.html("<tr><th>ID</th><th>Message</th><th>Result</th></tr>");
+	       console.log(frequency_list)
 	       for (messageNum in frequency_list) {
 	    	   var result = frequency_list[messageNum].analysisResult.toLowerCase();
 	    	    var label = result === 'positive' ? 'success' : (result === 'negative' ? 'danger' : 'default');

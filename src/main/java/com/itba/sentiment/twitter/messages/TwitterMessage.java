@@ -120,7 +120,7 @@ public class TwitterMessage {
 		builder.append("{\"tweet_id\":\"");
 		builder.append(tweetid);
 		builder.append("\", \"message\":\"");
-		builder.append(text.replaceAll("'", "").replaceAll("\"", ""));
+		builder.append(text.replaceAll("'", "").replaceAll("\"", "").replaceAll("\n", ""));
 		builder.append("\", \"URL\":\"");
 		builder.append(URL);
 		builder.append("\", \"user\":\"");
