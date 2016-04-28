@@ -41,7 +41,7 @@ public class MessagesController {
 	@ResponseBody
 	public String getMessages() {
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
-		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getAnalyzedCollection("analyzedtweets");
 		for (org.bson.Document tweet : tweets) {
 			JsonHelper.printJson(tweet);
 			projectedTweets.add(new TwitterMessage(tweet));
@@ -64,7 +64,7 @@ public class MessagesController {
 			ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
 		
 			AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
-			ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+			ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("analyzedtweets");
 			for (org.bson.Document tweet : tweets) {
 				JsonHelper.printJson(tweet);
 				projectedTweets.add(new TwitterMessage(tweet));

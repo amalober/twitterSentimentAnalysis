@@ -1,21 +1,22 @@
 package com.itba.sentiment.persist;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
+import org.springframework.stereotype.Component;
 
+import com.itba.sentiment.analysis.DocSentiment;
+import com.itba.sentiment.twitter.messages.TwitterMessage;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientURI;
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-
-import com.itba.sentiment.twitter.messages.TwitterMessage;
-
-import org.springframework.stereotype.Component;
 
 @Component
 public class JsonPersistenceService {
@@ -52,6 +53,24 @@ public class JsonPersistenceService {
 			coll.insertOne(org.bson.Document.parse(string));
 		}
 	}
+	public void persistTwitterMessageArray(List<TwitterMessage> array, String collection) {
+		if (db == null) {
+			throw new MongoException("Desconectada");
+		}
+		MongoCollection<org.bson.Document> coll = db.getCollection(collection);
+		for (TwitterMessage twitterMessage : array) {
+			coll.insertOne(org.bson.Document.parse(twitterMessage.toString()));
+		}
+	}
+	public void persistTwitterMessage(TwitterMessage message, String collection) {
+		if (db == null) {
+			throw new MongoException("Desconectada");
+		}
+		MongoCollection<org.bson.Document> coll = db.getCollection(collection);	
+			System.out.println(message);
+			coll.insertOne(org.bson.Document.parse(message.toString()));
+		
+	}
 
 	public List<Document> getProjectedCollection(String collectionName) {
 		ArrayList<Document> result = new ArrayList<Document>();
@@ -64,6 +83,16 @@ public class JsonPersistenceService {
 		}
 		return result;
 	}
+	public List<Document> getAnalyzedCollection(String collectionName) {
+		ArrayList<Document> result = new ArrayList<Document>();
+		if (db != null) {
+			MongoCollection<Document> collection = db.getCollection(collectionName);		
+			result = collection.find().into(new ArrayList<Document>());
+
+		}
+		return result;
+	}
+
 
 	public String getURI() {
 		return URI;

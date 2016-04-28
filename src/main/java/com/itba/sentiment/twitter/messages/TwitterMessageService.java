@@ -31,7 +31,7 @@ public class TwitterMessageService {
 
 			try {
 				Query query = new Query(keyword);
-				query.setCount(3);
+				query.setCount(1000);
 				QueryResult result;
 				result = twitter.search(query);
 				System.out.println("Getting Tweets...");
@@ -51,7 +51,7 @@ public class TwitterMessageService {
 					basicObj.put("tweet_text", tweet.getText());
 
 					try {
-						JsonHelper.printJson(basicObj);
+						//JsonHelper.printJson(basicObj);
 						String json = TwitterObjectFactory.getRawJSON(tweet);						
 						jsonTweets.add(json);
 						
@@ -74,7 +74,7 @@ public class TwitterMessageService {
 
 			}
 		} else {
-			System.out.println("MongoDB is not Connected! Please check mongoDB intance running..");
+			System.out.println("Not connected to Twitter...");
 		}
 		return jsonTweets;
 	}

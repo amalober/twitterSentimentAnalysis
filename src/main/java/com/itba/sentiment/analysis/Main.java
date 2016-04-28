@@ -35,61 +35,68 @@ public class Main {
 	static JsonPersistenceService jps = new JsonPersistenceService("mongodb://localhost:27017", "TwitterDB");
 
 	public static void main(String[] args) {
-		//testDownloadTweetsAndAnalyze()
-		testGetMessages();
+//		testDownloadTweets();
+		//System.out.println(wordFrequencyJson());
+		// testGetMessages();
+		//testAnalyzeTweets();
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getAnalyzedCollection("analyzedtweets");
+		for (org.bson.Document tweet : tweets) {
+			JsonHelper.printJson(tweet);
+			projectedTweets.add(new TwitterMessage(tweet));
+		}
+		System.out.println(projectedTweets.toString());
 	}
 
-private static void testDownloadTweetsAndAnalyze()
-	{
-		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+	private static void testDownloadTweets() {
+
 		try {
-
-			try {
-				jps.persistJsonStringArray((List<String>) TwitterMessageService.getTweetByQuery(true, "superclasico"),
-						"tweets");
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			// --------------------------------------------------------
-			ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
-			for (org.bson.Document tweet : tweets) {
-				JsonHelper.printJson(tweet);
-				projectedTweets.add(new TwitterMessage(tweet));
-			}
-			AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
-
-			for (TwitterMessage projectedTweet : projectedTweets) {
-
-				try {
-					Document doc = alchemyObj.TextGetTextSentiment(projectedTweet.getText());
-					MessageParser.parseSentimentResultForMsg(projectedTweet, doc);
-					System.out.println(projectedTweet.toString());
-				} catch (XPathExpressionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (SAXException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ParserConfigurationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				// System.out.println(getStringFromDocument(doc));
-
-				jps.closeDBConnection();
-
-			}
-
-		} finally {
-			jps.closeDBConnection();
+			jps.persistJsonStringArray((List<String>) TwitterMessageService.getTweetByQuery(true, "#Superclasico"),
+					"tweets");
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
-	private static void testWordFrequency() { 
+	// --------------------------------------------------------
+	private static void testAnalyzeTweets() {
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		for (org.bson.Document tweet : tweets) {
+			JsonHelper.printJson(tweet);
+			projectedTweets.add(new TwitterMessage(tweet));
+		}
+		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
+
+		for (TwitterMessage projectedTweet : projectedTweets) {
+
+			try {
+				Document doc = alchemyObj.TextGetTextSentiment(projectedTweet.getText());
+				MessageParser.parseSentimentResultForMsg(projectedTweet, doc);
+				jps.persistTwitterMessage(projectedTweet, "analyzedtweets");
+				System.out.println(projectedTweet.toString());
+			} catch (XPathExpressionException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (SAXException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ParserConfigurationException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			// System.out.println(getStringFromDocument(doc));
+
+		}
+		jps.closeDBConnection();
+
+	}
+
+	private static void testWordFrequency() {
 		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
 		String appendedMsgs = "";
 		String cleanMessages = "";
@@ -102,10 +109,10 @@ private static void testDownloadTweetsAndAnalyze()
 			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
 			Map<String, Integer> m = WordCount.wordFrequencyCount(cleanMessages);
 
-		//	m.values().removeAll(Collections.singleton(1));
-		//	m.values().removeAll(Collections.singleton(2));
+			// m.values().removeAll(Collections.singleton(1));
+			// m.values().removeAll(Collections.singleton(2));
 
-			//m.keySet().removeAll(Collections.singleton("/"));
+			// m.keySet().removeAll(Collections.singleton("/"));
 
 			// [{\"text\":\"study\",\"size\":40},
 
@@ -117,11 +124,11 @@ private static void testDownloadTweetsAndAnalyze()
 		}
 		System.out.println(json);
 	}
-	
-	private static void testGetMessages(){
-		ArrayList<org.bson.Document> result= (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
-		ArrayList<TwitterMessage> projectedTweets= new ArrayList<TwitterMessage>();
-		for(org.bson.Document doc:result){
+
+	private static void testGetMessages() {
+		ArrayList<org.bson.Document> result = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
+		for (org.bson.Document doc : result) {
 			projectedTweets.add(new TwitterMessage(doc));
 		}
 		System.out.println(projectedTweets.toString());
@@ -179,4 +186,28 @@ private static void testDownloadTweetsAndAnalyze()
 			return null;
 		}
 	}
+
+	private static String wordFrequencyJson() {
+
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
+		String appendedMsgs = "";
+		String cleanMessages = "";
+		String json = "[";
+		if (messages != null) {
+			for (org.bson.Document message : messages) {
+				appendedMsgs += message.getString("text").toLowerCase() + " ";
+			}
+			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
+			Map<String, Integer> m = WordCount.wordFrequencyCount(cleanMessages);
+
+			
+			for (Map.Entry<String, Integer> entry : m.entrySet()) {
+				json += "{ text: \"" + entry.getKey() + "\", \"size\": " + entry.getValue() * 3 + "},";
+			}
+			json = json.substring(0, json.length() - 1);
+			json += ']';
+		}
+		return json;
+	}
+
 }
