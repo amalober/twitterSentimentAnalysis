@@ -30,17 +30,17 @@ public class TwitterMessage {
 		this.datestr = tweet.getString("created_at");
 		this.id= (ObjectId)tweet.get("_id");
 		}catch(ClassCastException cce){
-			this.username =tweet.getString("username");
-			this.tweetid = tweet.getString("tweetid");
-			this.URL = tweet.getString("URL");
-			this.text = tweet.getString("text");
+			this.username =tweet.getString("user");
+			this.tweetid = tweet.getString("tweet_id");
+			this.URL = baseURL+this.tweetid;
+			this.text = tweet.getString("message");
 			this.datestr = tweet.getString("datestr");
 			this.id= (ObjectId)tweet.get("id");
 			this.sentiment = new DocSentiment();
 			Document sentimentjson =  (Document)tweet.get("sentiment");
-			this.sentiment.setType(sentimentjson.getString("type"));
-			this.sentiment.setScore(Double.parseDouble(sentimentjson.getString("mixed")));
-			this.sentiment.setMixed(Integer.parseInt(sentimentjson.getString("mixed")));
+			this.sentiment.setType(sentimentjson.getString("analysisResult"));
+			this.sentiment.setScore(Double.parseDouble(sentimentjson.getString("score")));
+			this.sentiment.setMixed(0);
 			this.sentiment.setLanguage(sentimentjson.getString("language"));
 		}
 	}
@@ -120,9 +120,13 @@ public class TwitterMessage {
 		builder.append("{\"tweet_id\":\"");
 		builder.append(tweetid);
 		builder.append("\", \"message\":\"");
-		builder.append(text);
+		builder.append(text.replaceAll("'", "").replaceAll("\"", ""));
+		builder.append("\", \"URL\":\"");
+		builder.append(URL);
 		builder.append("\", \"user\":\"");
 		builder.append(username);
+		builder.append("\", \"analysisResult\":\"");
+		builder.append(sentiment.getType());
 		builder.append("\", \"sentiment\":");
 		builder.append((sentiment ==null)?"\"\"":sentiment.toString()); 	
 		builder.append("}");

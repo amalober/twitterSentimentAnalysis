@@ -52,7 +52,7 @@ public class MessageCleaner {
 			// MessageCleaner.class.getResourceAsStream("./stopwords.txt");
 			// InputStreamReader isr= new InputStreamReader(is);
 			// BufferedReader br = new BufferedReader(isr);
-			message = message.replaceAll("\\p{Punct}+", "");
+			message = message.replaceAll("\\p{Punct}+", "").replaceAll("'", "").replaceAll("\"", "");
 			StringBuilder builder = new StringBuilder(message);
 			String[] words = builder.toString().split("\\s");
 			for (String word : words) {
