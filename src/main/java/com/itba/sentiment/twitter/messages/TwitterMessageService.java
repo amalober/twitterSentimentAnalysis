@@ -31,7 +31,7 @@ public class TwitterMessageService {
 
 			try {
 				Query query = new Query(keyword);
-				query.setCount(1000);
+				query.setCount(100);
 				QueryResult result;
 				result = twitter.search(query);
 				System.out.println("Getting Tweets...");

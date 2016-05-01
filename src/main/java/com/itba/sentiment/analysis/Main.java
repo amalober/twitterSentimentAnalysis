@@ -3,9 +3,13 @@ package com.itba.sentiment.analysis;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.Transformer;
@@ -20,7 +24,7 @@ import org.xml.sax.SAXException;
 
 import com.alchemyapi.api.AlchemyAPI;
 import com.itba.sentiment.alchemy.MessageParser;
-import com.itba.sentiment.persist.JsonPersistenceService;
+import com.itba.sentiment.persistance.JsonPersistenceService;
 import com.itba.sentiment.twitter.messages.TwitterMessage;
 import com.itba.sentiment.twitter.messages.TwitterMessageService;
 import com.itba.sentiment.utils.JsonHelper;
@@ -35,28 +39,86 @@ public class Main {
 	static JsonPersistenceService jps = new JsonPersistenceService("mongodb://localhost:27017", "TwitterDB");
 
 	public static void main(String[] args) {
-//		testDownloadTweets();
-		//System.out.println(wordFrequencyJson());
+		// testDownloadTweets();
+		// System.out.println(wordFrequencyJson());
 		// testGetMessages();
-		//testAnalyzeTweets();
-		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
-		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getAnalyzedCollection("analyzedtweets");
-		for (org.bson.Document tweet : tweets) {
-			JsonHelper.printJson(tweet);
-			projectedTweets.add(new TwitterMessage(tweet));
-		}
-		System.out.println(projectedTweets.toString());
+		testDownloadTweets();
+		testAnalyzeTweets();
+		// testTopTen();
+		// ArrayList<TwitterMessage> projectedTweets = new
+		// ArrayList<TwitterMessage>();
+		// ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>)
+		// jps.getAnalyzedCollection("analyzedtweets");
+		// for (org.bson.Document tweet : tweets) {
+		// JsonHelper.printJson(tweet);
+		// projectedTweets.add(new TwitterMessage(tweet));
+		// }
+		// System.out.println(projectedTweets.toString());
 	}
 
 	private static void testDownloadTweets() {
 
 		try {
-			jps.persistJsonStringArray((List<String>) TwitterMessageService.getTweetByQuery(true, "#Superclasico"),
+			jps.persistJsonStringArray((List<String>) TwitterMessageService.getTweetByQuery(true, "#bomba"),
 					"tweets");
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	private static void testTopTen() {
+		Map<String, Integer> orderdescmap = entriesSortedByValues(getWordFrequencyCount());
+		String json = "[";
+		int i = 0;
+		for (Map.Entry<String, Integer> entry : orderdescmap.entrySet()) {
+			json += "{ word: \"" + entry.getKey() + "\", \"count\": " + entry.getValue() + "},";
+			if (i++ >= 10) {
+				break;
+			}
+		}
+		json = json.substring(0, json.length() - 1);
+		json += ']';
+		System.out.println(json);
+	}
+
+	private static Map<String, Integer> getWordFrequencyCount() {
+		String appendedMsgs = "";
+		String cleanMessages = "";
+		Map<String, Integer> m = null;
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
+		if (messages != null) {
+			for (org.bson.Document message : messages) {
+				appendedMsgs += message.getString("text").toLowerCase() + " ";
+			}
+			// System.out.println(appendedMsgs);
+			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
+			m = WordCount.wordFrequencyCount(cleanMessages);
+
+		}
+		return m;
+	}
+
+	static Map<String, Integer> entriesSortedByValues(Map<String, Integer> map) {
+
+		Comparator<Map.Entry<String, Integer>> byMapValues = new Comparator<Map.Entry<String, Integer>>() {
+			@Override
+			public int compare(Map.Entry<String, Integer> left, Map.Entry<String, Integer> right) {
+				return right.getValue().compareTo(left.getValue());
+			}
+		};
+
+		// create a list of map entries
+		List<Map.Entry<String, Integer>> maplist = new ArrayList<Map.Entry<String, Integer>>();
+		maplist.addAll((Collection<? extends Entry<String, Integer>>) map.entrySet());
+
+		// sort the collection
+		Collections.sort(maplist, byMapValues);
+		Map<String, Integer> newmap = new LinkedHashMap<String, Integer>();
+		for (Entry<String, Integer> entry : maplist) {
+			newmap.put(entry.getKey(), entry.getValue());
+		}
+		return newmap;
 	}
 
 	// --------------------------------------------------------
@@ -88,7 +150,7 @@ public class Main {
 			} catch (ParserConfigurationException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			} 
+			}
 			// System.out.println(getStringFromDocument(doc));
 
 		}
@@ -200,7 +262,6 @@ public class Main {
 			cleanMessages = MessageCleaner.removeStopwords(appendedMsgs);
 			Map<String, Integer> m = WordCount.wordFrequencyCount(cleanMessages);
 
-			
 			for (Map.Entry<String, Integer> entry : m.entrySet()) {
 				json += "{ text: \"" + entry.getKey() + "\", \"size\": " + entry.getValue() * 3 + "},";
 			}

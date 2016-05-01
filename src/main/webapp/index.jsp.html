@@ -39,10 +39,34 @@ body {
   top: -10px;
   left: 270px;
 }
+div.chart{
+ font-family:sans-serif;
+ font-size:0.7em;
+}
+div.bar {
+ background-color:DarkRed;
+ color:white;
+ height:3em;
+ line-height:3em;
+ padding-right:1em;
+ margin-bottom:2px;
+ text-align:right;
+ margin-left:22em;
+}
+div.label {
+ height:3em;
+ line-height:3em;
+ padding-right:1em;
+ margin-bottom:2px;
+ float:left;
+ width:20em;
+ text-align:right;
+}
 
 </style>
 <body>
 	<div id="svg"></div>
+	<div id="svg2"></div>
 	<button type="button" id="classify">Classify messages</button>
 	<div class="container">
 		<table id="messages" class="table table-striped"></table>
@@ -50,13 +74,51 @@ body {
 
 
 	<script>
-	
+	function loadBarChart(){
+		$.get("messages/topten", function(data, status){
+		      $("#svg2").html("");
+		      var margin = 50,
+		 	 width = 700-margin,
+		 	 height = 300-margin;
+		      var top10list =eval(data);
+		      console.log(top10list.length);
+		     
+		      function draw(data) {
+		    		 var d=data;
+		    		"use strict";
+		    		d3.select("body")
+		    		.append("div")
+		    			.attr("class", "chart")
+		    			.attr("width", width+margin)
+						.attr("height", height+margin)
+		    		.selectAll("div.line")
+		    		.data(data.cash)
+		    		.enter()
+		    		.append("div")
+		    			.attr("class", "line");
+
+		    		d3.selectAll("div.line")
+		    			.append("div")
+		    				.attr("class", "label")
+		    			.text(function(d){return d.word});
+
+
+		    		d3.selectAll("div.line")
+		    		.append("div")
+		    			.attr("class", "bar")
+		    			.style("width", function(d){return d.count/100 +"px"})
+		    			.style("outline", "1px solid black")
+		    			.text(function(d){return d.count});
+		    			
+		    	 } });
+		
+	}
 	function loadCloud(){
 	
 	    $.get("messages/test", function(data, status){
 	      $("#svg").html("");
 	      var frequency_list =eval(data);
-	      console.log(frequency_list.length);
+	     
 	      var color = d3.scale.linear()   
 	                  .domain([0,1,2,3,4,5,6,10,15,20,100])
 	                  .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);
@@ -68,7 +130,7 @@ body {
 	                  .on("end", draw)
 	                  .start();
 	          frequency_list = "";
-	          function draw(words) {http://localhost:8080/message-sentiment/index.jsp.html
+	          function draw(words) {
 	              d3.select("#svg").append("svg")
 	                      .attr("width", 900)
 	                      .attr("height", 400)
@@ -110,14 +172,17 @@ body {
 	    
 	}
 	$(document).ready(function(){
+		
 		loadData();
 		loadCloud();
+		loadBarChart();
 		
 	});
 	
 	$("#classify").click(function(){
 		$.get("messages/process", function(data, status){
 			loadData();
+			
 		});
 	});
 	</script>
