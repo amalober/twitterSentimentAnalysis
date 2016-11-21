@@ -30,6 +30,7 @@ import com.alchemyapi.api.AlchemyAPI;
 import com.itba.sentiment.alchemy.MessageParser;
 import com.itba.sentiment.persistance.JsonPersistenceService;
 import com.itba.sentiment.twitter.messages.TwitterMessage;
+import com.itba.sentiment.twitter.messages.TwitterMessageService;
 import com.itba.sentiment.utils.JsonHelper;
 import com.itba.sentiment.utils.MessageCleaner;
 import com.itba.sentiment.utils.WordCount;
@@ -46,7 +47,7 @@ public class MessagesController {
 	public String getMessages() {
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
 		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps
-				.getAnalyzedCollection("analyzedtweets");
+				.getAnalyzedCollection("analyzedtweetsfinal");
 		for (org.bson.Document tweet : tweets) {
 			JsonHelper.printJson(tweet);
 			projectedTweets.add(new TwitterMessage(tweet));
@@ -66,7 +67,7 @@ public class MessagesController {
 	@ResponseBody
 	public String getTenWordFrequency() {
 		Map<String, Integer> orderdescmap = entriesSortedByValues(getWordFrequencyCount());
-		String json = "[";
+		String json = "{\"words\":[";
 		int i = 0;
 		for (Map.Entry<String, Integer> entry : orderdescmap.entrySet()) {
 			json += "{\"word\": \"" + entry.getKey() + "\", \"count\": " + entry.getValue() + "},";
@@ -75,7 +76,7 @@ public class MessagesController {
 			}
 		}
 		json = json.substring(0, json.length() - 1);
-		json += ']';
+		json += "]}";
 		return json;
 	}
 
@@ -85,9 +86,8 @@ public class MessagesController {
 
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
 
-		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
-		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps
-				.getProjectedCollection("analyzedtweets");
+		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("fb685203cd369be96f82203fb526682db5fae140"); //e998828d910577cd4d474aa7cf9459514af80f6b");
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweetsfinal");
 		for (org.bson.Document tweet : tweets) {
 			JsonHelper.printJson(tweet);
 			projectedTweets.add(new TwitterMessage(tweet));
@@ -98,10 +98,9 @@ public class MessagesController {
 				try {
 					doc = alchemyObj.TextGetTextSentiment(message.getText());
 					MessageParser.parseSentimentResultForMsg(message, doc);
-					// persist messages in collection
+					jps.persistTwitterMessage(message, "analyzedtweetsfinal");
 
 				} catch (XPathExpressionException | IOException | SAXException | ParserConfigurationException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				// System.out.println(getStringFromDocument(doc));
@@ -115,7 +114,7 @@ public class MessagesController {
 		String appendedMsgs = "";
 		String cleanMessages = "";
 		Map<String, Integer> m = null;
-		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweetsfinal");
 		if (messages != null) {
 			for (org.bson.Document message : messages) {
 				appendedMsgs += message.getString("text").toLowerCase() + " ";
@@ -147,6 +146,19 @@ public class MessagesController {
 		json += ']';
 		return json;
 
+	}
+
+	@RequestMapping(path = "/submitquery", produces = "application/text; charset=UTF-8")
+	@ResponseBody
+	private void downloadTweets() {
+
+		try {
+
+			TwitterMessageService.getTweetByQuery(true, "#trump&lang=es-filter:retweets", 1000);// "#trump&lang=es");
+
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private static String getStringFromDocument(Document doc) {

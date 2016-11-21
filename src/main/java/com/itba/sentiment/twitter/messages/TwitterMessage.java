@@ -126,7 +126,7 @@ public class TwitterMessage {
 		builder.append("\", \"user\":\"");
 		builder.append(username);
 		builder.append("\", \"analysisResult\":\"");
-		builder.append(sentiment.getType());
+		builder.append((sentiment ==null)?"\"\"":sentiment.getType());
 		builder.append("\", \"sentiment\":");
 		builder.append((sentiment ==null)?"\"\"":sentiment.toString()); 	
 		builder.append("}");

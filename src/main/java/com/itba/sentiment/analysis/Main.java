@@ -42,8 +42,8 @@ public class Main {
 		// testDownloadTweets();
 		// System.out.println(wordFrequencyJson());
 		// testGetMessages();
-		testDownloadTweets();
-		testAnalyzeTweets();
+		 testDownloadTweets();
+		//testAnalyzeTweets();
 		// testTopTen();
 		// ArrayList<TwitterMessage> projectedTweets = new
 		// ArrayList<TwitterMessage>();
@@ -59,10 +59,8 @@ public class Main {
 	private static void testDownloadTweets() {
 
 		try {
-			jps.persistJsonStringArray((List<String>) TwitterMessageService.getTweetByQuery(true, "#bomba"),
-					"tweets");
+			TwitterMessageService.getTweetByQuery(true, "#lineac", 100);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -86,7 +84,7 @@ public class Main {
 		String appendedMsgs = "";
 		String cleanMessages = "";
 		Map<String, Integer> m = null;
-		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweetsfinal");
 		if (messages != null) {
 			for (org.bson.Document message : messages) {
 				appendedMsgs += message.getString("text").toLowerCase() + " ";
@@ -124,19 +122,19 @@ public class Main {
 	// --------------------------------------------------------
 	private static void testAnalyzeTweets() {
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
-		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweetsfinal");
 		for (org.bson.Document tweet : tweets) {
 			JsonHelper.printJson(tweet);
 			projectedTweets.add(new TwitterMessage(tweet));
 		}
-		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("d2f732e841e0867f2325606841102375308f66dc");
+		AlchemyAPI alchemyObj = AlchemyAPI.GetInstanceFromString("fb685203cd369be96f82203fb526682db5fae140");//"e998828d910577cd4d474aa7cf9459514af80f6b");
 
 		for (TwitterMessage projectedTweet : projectedTweets) {
 
 			try {
 				Document doc = alchemyObj.TextGetTextSentiment(projectedTweet.getText());
 				MessageParser.parseSentimentResultForMsg(projectedTweet, doc);
-				jps.persistTwitterMessage(projectedTweet, "analyzedtweets");
+				jps.persistTwitterMessage(projectedTweet, "analyzedtweetsfinal");
 				System.out.println(projectedTweet.toString());
 			} catch (XPathExpressionException e) {
 				// TODO Auto-generated catch block
@@ -188,7 +186,7 @@ public class Main {
 	}
 
 	private static void testGetMessages() {
-		ArrayList<org.bson.Document> result = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweets");
+		ArrayList<org.bson.Document> result = (ArrayList<org.bson.Document>) jps.getProjectedCollection("tweetsfinal");
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
 		for (org.bson.Document doc : result) {
 			projectedTweets.add(new TwitterMessage(doc));
@@ -201,7 +199,7 @@ public class Main {
 
 		ArrayList<TwitterMessage> projectedTweets = new ArrayList<TwitterMessage>();
 		ArrayList<org.bson.Document> tweets = (ArrayList<org.bson.Document>) jps
-				.getProjectedCollection("twittersentiment");
+				.getProjectedCollection("tweetsfinal");
 		for (org.bson.Document tweet : tweets) {
 			JsonHelper.printJson(tweet);
 			projectedTweets.add(new TwitterMessage(tweet));
@@ -251,7 +249,7 @@ public class Main {
 
 	private static String wordFrequencyJson() {
 
-		List<org.bson.Document> messages = jps.getProjectedCollection("tweets");
+		List<org.bson.Document> messages = jps.getProjectedCollection("tweetsfinal");
 		String appendedMsgs = "";
 		String cleanMessages = "";
 		String json = "[";

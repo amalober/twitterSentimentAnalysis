@@ -20,13 +20,17 @@
 </head>
 <style>
 body {
-	font-family: "Lucida Grande", "Droid Sans", Arial, Helvetica, sans-serif;
+	font-family: verdana,"Lucida Grande", "Droid Sans", Arial, Helvetica, sans-serif;
+	 margin-top: 0;
+    min-height: 100%;
+    outline: medium none;
+    overflow: visible;
 }
 
 .legend {
 	border: 1px solid #555555;
 	border-radius: 5px 5px 5px 5px;
-	font-size: 0.8em;
+	font-size: 1.0em;
 	margin: 10px;
 	padding: 8px;
 }
@@ -34,40 +38,44 @@ body {
 .bld {
 	font-weight: bold;
 }
-#classify {
-  position: relative;
-  top: -10px;
-  left: 270px;
-}
-div.chart{
- font-family:sans-serif;
- font-size:0.7em;
-}
+
+ div.chart{
+	font-family:sans-serif;
+    font-size:0.9em;
+        }
 div.bar {
- background-color:DarkRed;
- color:white;
- height:3em;
- line-height:3em;
- padding-right:1em;
- margin-bottom:2px;
- text-align:right;
- margin-left:22em;
+	background-color:DarkRed;
+    color:white;
+    height:3em;
+    line-height:3em;
+    padding-right:1em;
+    margin-bottom:2px;
+    text-align:right;
+    margin-left:20em;
 }
 div.label {
- height:3em;
- line-height:3em;
- padding-right:1em;
- margin-bottom:2px;
- float:left;
- width:20em;
- text-align:right;
+	color:black;
+	font-size:1.0em;
+	height:3em;
+    line-height:3em;
+    padding-right:1em;
+    float:left;
+    width:20em;
+    text-align:right;
 }
-
+        
 </style>
 <body>
+<div class="form-group">
+    <label for="query">Escriba su Query</label>
+    <input type="text" class="form-control" id="queryinput"  placeholder="Escriba su consulta">
+    </div>
+     <button type="submit" class="btn btn-primary">Submit</button>
 	<div id="svg"></div>
 	<div id="svg2"></div>
+	<div id="process" style="height: 30px";>
 	<button type="button" id="classify">Classify messages</button>
+	</div>
 	<div class="container">
 		<table id="messages" class="table table-striped"></table>
 	</div>
@@ -77,48 +85,49 @@ div.label {
 	function loadBarChart(){
 		$.get("messages/topten", function(data, status){
 		      $("#svg2").html("");
-		      var margin = 50,
-		 	 width = 700-margin,
-		 	 height = 300-margin;
-		      var top10list =eval(data);
-		      console.log(top10list.length);
-		     
-		      function draw(data) {
-		    		 var d=data;
+		     // console.log(data)
+		      var json = JSON.stringify(eval("(" + data + ")"));
+		     // console.log(json);
+		      d3.json("http://127.0.0.1:8080/message-sentiment/messages/topten", draw);
+		      function draw(mydata) {
+		    	  var total= d3.sum(mydata.words, function(d){return d.count});
+		    	//console.log(total);
+		    	  var d=mydata;
 		    		"use strict";
-		    		d3.select("body")
+		    		d3.select("#svg2")
 		    		.append("div")
+		    			.attr("width", 900)
+	                  	.attr("height", 900)
 		    			.attr("class", "chart")
-		    			.attr("width", width+margin)
-						.attr("height", height+margin)
-		    		.selectAll("div.line")
-		    		.data(data.cash)
+		    		.selectAll(".bar")
+		    		.data(mydata.words)
 		    		.enter()
-		    		.append("div")
-		    			.attr("class", "line");
-
+            .append("div")
+            .attr("class","line")
+    
+        	d3.selectAll("div.line")
+            	.append("div")
+            		.attr("class","label")
+            		.text(function(d){return d.word})
+		    		
 		    		d3.selectAll("div.line")
-		    			.append("div")
-		    				.attr("class", "label")
-		    			.text(function(d){return d.word});
-
-
-		    		d3.selectAll("div.line")
 		    		.append("div")
-		    			.attr("class", "bar")
-		    			.style("width", function(d){return d.count/100 +"px"})
-		    			.style("outline", "1px solid black")
-		    			.text(function(d){return d.count});
-		    			
-		    	 } });
-		
-	}
+		    		.attr("class", "bar")
+					.style("width", function(d){return d3.round(100* d.count / total, 1)*10+"px"})
+					//.style("outline", "1px solid black")
+					.text(function(d, i) { 
+   						return ("" + d3.round(100* d.count / total, 1) + "% " + "")});
+		      }				
+		});
+	}	    		
+		    
+	
 	function loadCloud(){
 	
 	    $.get("messages/test", function(data, status){
 	      $("#svg").html("");
 	      var frequency_list =eval(data);
-	     
+	     //console.log(frequency_list);
 	      var color = d3.scale.linear()   
 	                  .domain([0,1,2,3,4,5,6,10,15,20,100])
 	                  .range(["#ddd", "#ccc", "#bbb", "#aaa", "#999", "#888", "#777", "#666", "#555", "#444", "#333", "#222"]);
@@ -147,8 +156,7 @@ div.label {
 	                      .attr("transform", function(d) {
 	                          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
 	                      })
-	                      .text(function(d) { return d.text; });
-	          
+	                      .text(function(d) { return d.text; });	          
 	          }
 	  });
 	}
@@ -157,7 +165,7 @@ div.label {
 	        var frequency_list =eval(data);
 	       var tablita=$("#messages");
 	       tablita.html("<tr><th>ID</th><th>Message</th><th>Result</th></tr>");
-	       console.log(frequency_list)
+	       //console.log(frequency_list)
 	       for (messageNum in frequency_list) {
 	    	   var result = frequency_list[messageNum].analysisResult.toLowerCase();
 	    	    var label = result === 'positive' ? 'success' : (result === 'negative' ? 'danger' : 'default');
@@ -172,10 +180,9 @@ div.label {
 	    
 	}
 	$(document).ready(function(){
-		
-		loadData();
 		loadCloud();
 		loadBarChart();
+		loadData();
 		
 	});
 	
@@ -185,6 +192,7 @@ div.label {
 			
 		});
 	});
+	
 	</script>
 </body>
 
